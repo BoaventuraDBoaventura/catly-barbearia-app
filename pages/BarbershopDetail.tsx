@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getStyleAdvice } from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
 import { isShopOpen } from '../services/timeUtils';
+import { calculateDistance, formatDistance } from '../services/locationUtils';
 
 const BarbershopDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,11 +16,27 @@ const BarbershopDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState('servicos');
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     fetchShopDetails();
     checkFavoriteStatus();
+    getUserLocation();
   }, [id]);
+
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserCoords({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => console.error("Error getting location:", error)
+      );
+    }
+  };
 
   async function fetchShopDetails() {
     try {
@@ -158,7 +175,11 @@ const BarbershopDetail: React.FC = () => {
           <div className="flex gap-6 py-4 border-t border-white/5">
             <div className="flex flex-col">
               <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest">Distância</span>
-              <span className="text-white font-bold">{shop.distance} km</span>
+              <span className="text-white font-bold">
+                {userCoords && shop.latitude && shop.longitude
+                  ? formatDistance(calculateDistance(userCoords.lat, userCoords.lng, shop.latitude, shop.longitude))
+                  : `${shop.distance || '1.0'} km`}
+              </span>
             </div>
             <div className="w-px h-8 bg-white/5"></div>
             <div className="flex flex-col">

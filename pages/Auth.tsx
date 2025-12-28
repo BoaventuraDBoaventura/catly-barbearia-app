@@ -9,6 +9,7 @@ const Auth: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSignUp, setIsSignUp] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleAuth = async (e: React.FormEvent) => {
@@ -82,13 +83,22 @@ const Auth: React.FC = () => {
                             <div className="relative">
                                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">lock</span>
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
                                     required
-                                    className="w-full h-14 pl-12 pr-4 bg-surface-highlight border-none rounded-2xl text-white placeholder:text-text-secondary/50 focus:ring-2 focus:ring-primary transition-all text-sm"
+                                    className="w-full h-14 pl-12 pr-12 bg-surface-highlight border-none rounded-2xl text-white placeholder:text-text-secondary/50 focus:ring-2 focus:ring-primary transition-all text-sm"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors focus:outline-none"
+                                >
+                                    <span className="material-symbols-outlined text-[20px]">
+                                        {showPassword ? 'visibility_off' : 'visibility'}
+                                    </span>
+                                </button>
                             </div>
                         </div>
 
