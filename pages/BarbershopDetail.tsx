@@ -16,12 +16,17 @@ const BarbershopDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState('servicos');
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(() => {
+    const saved = localStorage.getItem('catly_user_coords');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   useEffect(() => {
     fetchShopDetails();
     checkFavoriteStatus();
-    getUserLocation();
+    if (!userCoords) {
+      getUserLocation();
+    }
   }, [id]);
 
   const getUserLocation = () => {

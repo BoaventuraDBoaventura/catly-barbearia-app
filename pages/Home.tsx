@@ -10,10 +10,13 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
-  const [locationName, setLocationName] = useState('Moçambique');
+  const [locationName, setLocationName] = useState(() => localStorage.getItem('catly_location_name') || 'Moçambique');
   const [locationUrl, setLocationUrl] = useState<string | undefined>(undefined);
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [loadingLocation, setLoadingLocation] = useState(true);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(() => {
+    const saved = localStorage.getItem('catly_user_coords');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingShops, setLoadingShops] = useState(true);
   const [needsApiKey, setNeedsApiKey] = useState(false);
   const [barbershops, setBarbershops] = useState<any[]>([]);
@@ -128,6 +131,11 @@ const Home: React.FC = () => {
         const { address, url } = await getAddressFromCoords(latitude, longitude);
         setLocationName(address);
         setLocationUrl(url);
+
+        // Persistir localização
+        localStorage.setItem('catly_location_name', address);
+        localStorage.setItem('catly_user_coords', JSON.stringify({ lat: latitude, lng: longitude }));
+
         isRetrying.current = false;
       } catch (err: any) {
         const errorMsg = err?.message || String(err);
@@ -155,8 +163,11 @@ const Home: React.FC = () => {
   }, [getAddressFromCoords]);
 
   useEffect(() => {
-    updateLocation();
-  }, [updateLocation]);
+    // Só atualiza automaticamente se não tiver nada salvo
+    if (!userCoords) {
+      updateLocation();
+    }
+  }, []); // Remove updateLocation dependency to avoid loops if any, and only run on mount
 
   const categories = [
     { id: 'todos', label: 'Todos', icon: 'grid_view' },
@@ -236,13 +247,19 @@ const Home: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex flex-col flex-1 min-w-0">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.2em] mb-1">Explore as melhores</span>
-            <div className="flex items-center gap-2 cursor-pointer group" onClick={updateLocation}>
-              <div className="size-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <div className="flex items-center gap-2 cursor-pointer group hover:opacity-80 transition-all active:scale-[0.98]" onClick={updateLocation}>
+              <div className="size-8 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                 <span className={`material-symbols-outlined text-primary text-[20px] ${loadingLocation ? 'animate-spin' : ''}`}>
                   {loadingLocation ? 'sync' : 'location_on'}
                 </span>
               </div>
-              <h1 className="text-lg font-extrabold truncate pr-4 text-white">{locationName}</h1>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1">
+                  <h1 className="text-lg font-extrabold truncate text-white">{locationName}</h1>
+                  <span className={`material-symbols-outlined text-primary text-[16px] transition-all opacity-0 group-hover:opacity-100 ${loadingLocation ? 'animate-spin' : ''}`}>refresh</span>
+                </div>
+                {!loadingLocation && <span className="text-[9px] font-bold text-primary/60 uppercase tracking-tighter -mt-1 opacity-0 group-hover:opacity-100 transition-all">Clique para atualizar</span>}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
