@@ -5,7 +5,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('❌ Supabase configuration is missing in .env.local');
+    console.error('❌ Supabase configuration missing. If deploying, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your CI/CD provider (e.g. Netlify).');
 }
 
 export const supabase = (supabaseUrl && supabaseAnonKey)

@@ -259,7 +259,7 @@ const BarbershopDetail: React.FC = () => {
       </div>
 
       {/* Floating Action Buffer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-xl border-t border-white/5 p-4 pb-12 z-[100] shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
+      <div className="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-xl border-t border-white/5 p-4 pb-8 z-[150] shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
         <div className="max-w-md mx-auto">
           <button
             onClick={() => navigate(`/booking/${shop.id}`)}

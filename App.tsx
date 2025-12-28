@@ -55,8 +55,25 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="min-h-screen bg-background-dark flex flex-col items-center justify-center p-6 text-center">
         <span className="material-symbols-outlined text-red-500 text-6xl mb-4">database_off</span>
-        <h2 className="text-xl font-bold mb-2 text-white">Erro de Configuração</h2>
-        <p className="text-text-secondary">O Supabase não foi configurado corretamente. Verifique o seu arquivo .env.local</p>
+        <h2 className="text-xl font-bold mb-2 text-white">Configuração Necessária</h2>
+        <p className="text-text-secondary leading-relaxed max-w-md mx-auto mb-6">
+          O Supabase não foi detectado. Se você está no <strong>Netlify</strong>, certifique-se de adicionar as chaves nas
+          <code className="bg-gray-800 px-1 rounded text-red-400">Environment Variables</code> do painel de controle.
+        </p>
+        <div className="bg-gray-900/50 p-4 rounded-lg text-left text-sm border border-gray-800 w-full max-w-md">
+          <p className="font-mono text-gray-400 mb-2">Variáveis necessárias:</p>
+          <ul className="list-disc list-inside space-y-1 text-gray-300 font-mono text-xs">
+            <li>VITE_SUPABASE_URL</li>
+            <li>VITE_SUPABASE_ANON_KEY</li>
+            <li className="opacity-50 text-[10px] mt-1 italic">VITE_GEMINI_API_KEY (Opcional)</li>
+          </ul>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-8 px-6 py-2 bg-primary text-white rounded-full font-bold hover:brightness-110 transition-all"
+        >
+          Tentar Novamente
+        </button>
       </div>
     );
   }

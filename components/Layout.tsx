@@ -10,10 +10,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Ocultar nav em páginas de autenticação ou fluxos de agendamento
+  // Ocultar nav em páginas de autenticação, fluxos de agendamento ou detalhes da barbearia
   const isAuthPage = location.pathname === '/login';
   const isBookingPage = location.pathname.includes('/booking/');
-  const shouldHideNav = isAuthPage || isBookingPage;
+  const isDetailPage = location.pathname.includes('/barbershop/');
+  const shouldHideNav = isAuthPage || isBookingPage || isDetailPage;
 
   if (isAuthPage) return <>{children}</>;
 
