@@ -477,301 +477,314 @@ const Admin: React.FC = () => {
                 )}
                 {activeTab === 'shops' ? (
                     <>
-                        {/* Formulario de Cadastro */}
-                        <section className="bg-surface-dark p-6 rounded-[32px] border border-white/5 shadow-2xl animate-slideUp">
-                            <h3 className="text-xl font-black mb-6 text-white">{isEditing ? 'Editar Barbearia' : 'Cadastrar Barbearia'}</h3>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <input
-                                    type="text"
-                                    placeholder="Nome da Barbearia"
-                                    className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white focus:ring-2 focus:ring-primary"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Endereço Completo"
-                                    className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
-                                    value={formData.address}
-                                    onChange={e => setFormData({ ...formData, address: e.target.value })}
-                                    required
-                                />
-                                <textarea
-                                    placeholder="Descrição da Barbearia (História, diferenciais...)"
-                                    className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white min-h-[120px] resize-none"
-                                    value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                />
-
-                                <div className="grid grid-cols-2 gap-4">
+                        {/* Formulario de Cadastro - Só aparece se não exceder o limite ou estiver editando */}
+                        {(userRole === 'super_admin' || userRole === 'admin' || shops.length < maxShops || isEditing) ? (
+                            <section className="bg-surface-dark p-6 rounded-[32px] border border-white/5 shadow-2xl animate-slideUp">
+                                <h3 className="text-xl font-black mb-6 text-white">{isEditing ? 'Editar Barbearia' : 'Cadastrar Barbearia'}</h3>
+                                <form onSubmit={handleSubmit} className="space-y-4">
                                     <input
                                         type="text"
-                                        placeholder="Bairro"
-                                        className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
-                                        value={formData.neighborhood}
-                                        onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
+                                        placeholder="Nome da Barbearia"
+                                        className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white focus:ring-2 focus:ring-primary"
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
                                         required
                                     />
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Abertura</span>
-                                        <input
-                                            type="time"
-                                            className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
-                                            value={formData.opening_time}
-                                            onChange={e => setFormData({ ...formData, opening_time: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Fechamento</span>
-                                        <input
-                                            type="time"
-                                            className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
-                                            value={formData.closing_time}
-                                            onChange={e => setFormData({ ...formData, closing_time: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Endereço Completo"
+                                        className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
+                                        value={formData.address}
+                                        onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                        required
+                                    />
+                                    <textarea
+                                        placeholder="Descrição da Barbearia (História, diferenciais...)"
+                                        className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white min-h-[120px] resize-none"
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    />
 
-                                {/* Dias de Funcionamento */}
-                                <div className="space-y-3">
-                                    <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Dias de Funcionamento</span>
-                                    <div className="flex flex-wrap gap-2">
-                                        {[
-                                            { id: 1, label: 'Seg' },
-                                            { id: 2, label: 'Ter' },
-                                            { id: 3, label: 'Qua' },
-                                            { id: 4, label: 'Qui' },
-                                            { id: 5, label: 'Sex' },
-                                            { id: 6, label: 'Sáb' },
-                                            { id: 0, label: 'Dom' }
-                                        ].map(day => (
-                                            <button
-                                                key={day.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    const days = formData.opening_days.includes(day.id)
-                                                        ? formData.opening_days.filter(d => d !== day.id)
-                                                        : [...formData.opening_days, day.id];
-                                                    setFormData({ ...formData, opening_days: days });
-                                                }}
-                                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border ${formData.opening_days.includes(day.id)
-                                                    ? 'bg-primary border-primary text-white shadow-lg'
-                                                    : 'bg-background-dark border-white/5 text-text-secondary'
-                                                    }`}
-                                            >
-                                                {day.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Localização GPS */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between px-2">
-                                        <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest">Coordenadas GPS</span>
-                                        <button
-                                            type="button"
-                                            onClick={handleGetLocation}
-                                            disabled={locationLoading}
-                                            className="text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-1"
-                                        >
-                                            <span className={`material-symbols-outlined text-[14px] ${locationLoading ? 'animate-spin' : ''}`}>
-                                                {locationLoading ? 'sync' : 'my_location'}
-                                            </span>
-                                            {locationLoading ? 'Obtendo...' : 'Usar Local Atual'}
-                                        </button>
-                                    </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <input
-                                            type="number"
-                                            step="any"
-                                            placeholder="Latitude"
-                                            className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white text-sm"
-                                            value={formData.latitude || ''}
-                                            onChange={e => setFormData({ ...formData, latitude: e.target.value ? parseFloat(e.target.value) : null })}
+                                            type="text"
+                                            placeholder="Bairro"
+                                            className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
+                                            value={formData.neighborhood}
+                                            onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
                                             required
                                         />
-                                        <input
-                                            type="number"
-                                            step="any"
-                                            placeholder="Longitude"
-                                            className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white text-sm"
-                                            value={formData.longitude || ''}
-                                            onChange={e => setFormData({ ...formData, longitude: e.target.value ? parseFloat(e.target.value) : null })}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Upload de Imagem de Capa */}
-                                <div className="space-y-3">
-                                    <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Imagem de Capa</span>
-                                    <div className="relative group">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                            onChange={e => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    setImageFile(file);
-                                                    setImagePreview(URL.createObjectURL(file));
-                                                }
-                                            }}
-                                        />
-                                        <div className="w-full h-40 bg-background-dark border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden transition-all group-hover:border-primary/50">
-                                            {imagePreview ? (
-                                                <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
-                                            ) : (
-                                                <>
-                                                    <span className="material-symbols-outlined text-white/20 text-4xl mb-2">add_a_photo</span>
-                                                    <span className="text-white/40 text-[10px] font-black uppercase">Fazer upload de capa</span>
-                                                </>
-                                            )}
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Abertura</span>
+                                            <input
+                                                type="time"
+                                                className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
+                                                value={formData.opening_time}
+                                                onChange={e => setFormData({ ...formData, opening_time: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Fechamento</span>
+                                            <input
+                                                type="time"
+                                                className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
+                                                value={formData.closing_time}
+                                                onChange={e => setFormData({ ...formData, closing_time: e.target.value })}
+                                                required
+                                            />
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Galeria de Fotos */}
-                                <div className="space-y-3">
-                                    <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Galeria de Fotos</span>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {galleryPreviews.map((url, idx) => (
-                                            <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-white/10">
-                                                <img src={url} className="w-full h-full object-cover" alt="" />
+                                    {/* Dias de Funcionamento */}
+                                    <div className="space-y-3">
+                                        <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Dias de Funcionamento</span>
+                                        <div className="flex flex-wrap gap-2">
+                                            {[
+                                                { id: 1, label: 'Seg' },
+                                                { id: 2, label: 'Ter' },
+                                                { id: 3, label: 'Qua' },
+                                                { id: 4, label: 'Qui' },
+                                                { id: 5, label: 'Sex' },
+                                                { id: 6, label: 'Sáb' },
+                                                { id: 0, label: 'Dom' }
+                                            ].map(day => (
                                                 <button
+                                                    key={day.id}
                                                     type="button"
                                                     onClick={() => {
-                                                        setGalleryPreviews(prev => prev.filter((_, i) => i !== idx));
-                                                        setFormData(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== idx) }));
+                                                        const days = formData.opening_days.includes(day.id)
+                                                            ? formData.opening_days.filter(d => d !== day.id)
+                                                            : [...formData.opening_days, day.id];
+                                                        setFormData({ ...formData, opening_days: days });
                                                     }}
-                                                    className="absolute top-1 right-1 size-5 bg-red-500 rounded-full flex items-center justify-center"
+                                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border ${formData.opening_days.includes(day.id)
+                                                        ? 'bg-primary border-primary text-white shadow-lg'
+                                                        : 'bg-background-dark border-white/5 text-text-secondary'
+                                                        }`}
                                                 >
-                                                    <span className="material-symbols-outlined text-[14px] text-white">close</span>
+                                                    {day.label}
                                                 </button>
-                                            </div>
-                                        ))}
-                                        <div className="relative aspect-square bg-background-dark border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center group hover:border-primary/50 transition-all">
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Localização GPS */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between px-2">
+                                            <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest">Coordenadas GPS</span>
+                                            <button
+                                                type="button"
+                                                onClick={handleGetLocation}
+                                                disabled={locationLoading}
+                                                className="text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-1"
+                                            >
+                                                <span className={`material-symbols-outlined text-[14px] ${locationLoading ? 'animate-spin' : ''}`}>
+                                                    {locationLoading ? 'sync' : 'my_location'}
+                                                </span>
+                                                {locationLoading ? 'Obtendo...' : 'Usar Local Atual'}
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                placeholder="Latitude"
+                                                className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white text-sm"
+                                                value={formData.latitude || ''}
+                                                onChange={e => setFormData({ ...formData, latitude: e.target.value ? parseFloat(e.target.value) : null })}
+                                                required
+                                            />
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                placeholder="Longitude"
+                                                className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white text-sm"
+                                                value={formData.longitude || ''}
+                                                onChange={e => setFormData({ ...formData, longitude: e.target.value ? parseFloat(e.target.value) : null })}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Upload de Imagem de Capa */}
+                                    <div className="space-y-3">
+                                        <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Imagem de Capa</span>
+                                        <div className="relative group">
                                             <input
                                                 type="file"
-                                                multiple
                                                 accept="image/*"
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                                 onChange={e => {
-                                                    const files = Array.from(e.target.files || []);
-                                                    if (files.length > 0) {
-                                                        setGalleryFiles(prev => [...prev, ...files]);
-                                                        const newPreviews = files.map((f: any) => URL.createObjectURL(f));
-                                                        setGalleryPreviews(prev => [...prev, ...newPreviews]);
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setImageFile(file);
+                                                        setImagePreview(URL.createObjectURL(file));
                                                     }
                                                 }}
                                             />
-                                            <span className="material-symbols-outlined text-white/20">add</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Gerenciamento de Serviços */}
-                                <div className="space-y-4 pt-4 border-t border-white/5">
-                                    <h4 className="text-xs font-black text-white uppercase tracking-widest px-2">Serviços e Preços (MT)</h4>
-
-                                    <div className="bg-background-dark/50 p-4 rounded-2xl border border-white/5 space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <input
-                                                type="text"
-                                                placeholder="Nome do Serviço"
-                                                className="w-full bg-background-dark border border-white/5 rounded-xl p-3 text-white text-sm"
-                                                value={newService.name}
-                                                onChange={e => setNewService({ ...newService, name: e.target.value })}
-                                            />
-                                            <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary">MT</span>
-                                                <input
-                                                    type="number"
-                                                    placeholder="Preço"
-                                                    className="w-full bg-background-dark border border-white/5 rounded-xl p-3 pl-10 text-white text-sm"
-                                                    value={newService.price}
-                                                    onChange={e => setNewService({ ...newService, price: e.target.value })}
-                                                />
+                                            <div className="w-full h-40 bg-background-dark border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center overflow-hidden transition-all group-hover:border-primary/50">
+                                                {imagePreview ? (
+                                                    <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
+                                                ) : (
+                                                    <>
+                                                        <span className="material-symbols-outlined text-white/20 text-4xl mb-2">add_a_photo</span>
+                                                        <span className="text-white/40 text-[10px] font-black uppercase">Fazer upload de capa</span>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <select
-                                                className="w-full bg-background-dark border border-white/5 rounded-xl p-3 text-white text-sm"
-                                                value={newService.duration}
-                                                onChange={e => setNewService({ ...newService, duration: e.target.value })}
-                                            >
-                                                <option value="15">15 min</option>
-                                                <option value="30">30 min</option>
-                                                <option value="45">45 min</option>
-                                                <option value="60">60 min</option>
-                                                <option value="90">90 min</option>
-                                            </select>
-                                            <button
-                                                type="button"
-                                                onClick={addService}
-                                                className="bg-primary/20 text-primary font-black text-xs rounded-xl hover:bg-primary/30 transition-all"
-                                            >
-                                                ADICIONAR SERVIÇO
-                                            </button>
+                                    </div>
+
+                                    {/* Galeria de Fotos */}
+                                    <div className="space-y-3">
+                                        <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Galeria de Fotos</span>
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {galleryPreviews.map((url, idx) => (
+                                                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-white/10">
+                                                    <img src={url} className="w-full h-full object-cover" alt="" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setGalleryPreviews(prev => prev.filter((_, i) => i !== idx));
+                                                            setFormData(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== idx) }));
+                                                        }}
+                                                        className="absolute top-1 right-1 size-5 bg-red-500 rounded-full flex items-center justify-center"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px] text-white">close</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <div className="relative aspect-square bg-background-dark border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center group hover:border-primary/50 transition-all">
+                                                <input
+                                                    type="file"
+                                                    multiple
+                                                    accept="image/*"
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    onChange={e => {
+                                                        const files = Array.from(e.target.files || []);
+                                                        if (files.length > 0) {
+                                                            setGalleryFiles(prev => [...prev, ...files]);
+                                                            const newPreviews = files.map((f: any) => URL.createObjectURL(f));
+                                                            setGalleryPreviews(prev => [...prev, ...newPreviews]);
+                                                        }
+                                                    }}
+                                                />
+                                                <span className="material-symbols-outlined text-white/20">add</span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        {formData.services.map((s, idx) => (
-                                            <div key={idx} className="bg-background-dark border border-white/5 p-3 rounded-xl flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="material-symbols-outlined text-primary">{s.icon}</span>
-                                                    <div>
-                                                        <p className="text-white text-sm font-bold">{s.name}</p>
-                                                        <p className="text-text-secondary text-[10px]">{s.duration} min • {s.price} MT</p>
-                                                    </div>
+                                    {/* Gerenciamento de Serviços */}
+                                    <div className="space-y-4 pt-4 border-t border-white/5">
+                                        <h4 className="text-xs font-black text-white uppercase tracking-widest px-2">Serviços e Preços (MT)</h4>
+
+                                        <div className="bg-background-dark/50 p-4 rounded-2xl border border-white/5 space-y-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nome do Serviço"
+                                                    className="w-full bg-background-dark border border-white/5 rounded-xl p-3 text-white text-sm"
+                                                    value={newService.name}
+                                                    onChange={e => setNewService({ ...newService, name: e.target.value })}
+                                                />
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary">MT</span>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Preço"
+                                                        className="w-full bg-background-dark border border-white/5 rounded-xl p-3 pl-10 text-white text-sm"
+                                                        value={newService.price}
+                                                        onChange={e => setNewService({ ...newService, price: e.target.value })}
+                                                    />
                                                 </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <select
+                                                    className="w-full bg-background-dark border border-white/5 rounded-xl p-3 text-white text-sm"
+                                                    value={newService.duration}
+                                                    onChange={e => setNewService({ ...newService, duration: e.target.value })}
+                                                >
+                                                    <option value="15">15 min</option>
+                                                    <option value="30">30 min</option>
+                                                    <option value="45">45 min</option>
+                                                    <option value="60">60 min</option>
+                                                    <option value="90">90 min</option>
+                                                </select>
                                                 <button
                                                     type="button"
-                                                    onClick={() => removeService(s.id)}
-                                                    className="text-red-500 material-symbols-outlined"
+                                                    onClick={addService}
+                                                    className="bg-primary/20 text-primary font-black text-xs rounded-xl hover:bg-primary/30 transition-all"
                                                 >
-                                                    delete
+                                                    ADICIONAR SERVIÇO
                                                 </button>
                                             </div>
-                                        ))}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {formData.services.map((s, idx) => (
+                                                <div key={idx} className="bg-background-dark border border-white/5 p-3 rounded-xl flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="material-symbols-outlined text-primary">{s.icon}</span>
+                                                        <div>
+                                                            <p className="text-white text-sm font-bold">{s.name}</p>
+                                                            <p className="text-text-secondary text-[10px]">{s.duration} min • {s.price} MT</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeService(s.id)}
+                                                        className="text-red-500 material-symbols-outlined"
+                                                    >
+                                                        delete
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <label className="flex items-center gap-3 p-4 bg-background-dark/50 rounded-2xl border border-white/5 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="size-5 accent-primary"
-                                        checked={formData.is_premium}
-                                        onChange={e => setFormData({ ...formData, is_premium: e.target.checked })}
-                                    />
-                                    <span className="text-white font-bold text-sm">Barbearia Premium</span>
-                                </label>
+                                    <label className="flex items-center gap-3 p-4 bg-background-dark/50 rounded-2xl border border-white/5 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="size-5 accent-primary"
+                                            checked={formData.is_premium}
+                                            onChange={e => setFormData({ ...formData, is_premium: e.target.checked })}
+                                        />
+                                        <span className="text-white font-bold text-sm">Barbearia Premium</span>
+                                    </label>
 
-                                <div className="flex gap-4 pt-4">
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="flex-1 h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all disabled:opacity-50"
-                                    >
-                                        {isEditing ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR AGORA'}
-                                    </button>
-                                    {isEditing && (
+                                    <div className="flex gap-4 pt-4">
                                         <button
-                                            type="button"
-                                            onClick={resetForm}
-                                            className="h-16 px-6 bg-surface-highlight text-white font-black rounded-2xl border border-white/5 active:scale-95 transition-all"
+                                            type="submit"
+                                            disabled={loading}
+                                            className="flex-1 h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all disabled:opacity-50"
                                         >
-                                            CANCELAR
+                                            {isEditing ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR AGORA'}
                                         </button>
-                                    )}
+                                        {isEditing && (
+                                            <button
+                                                type="button"
+                                                onClick={resetForm}
+                                                className="h-16 px-6 bg-surface-highlight text-white font-black rounded-2xl border border-white/5 active:scale-95 transition-all"
+                                            >
+                                                CANCELAR
+                                            </button>
+                                        )}
+                                    </div>
+                                </form>
+                            </section>
+                        ) : (
+                            <div className="bg-primary/5 border border-primary/10 p-10 rounded-[40px] text-center mb-10 animate-fadeIn border-dashed">
+                                <div className="size-16 bg-primary/10 rounded-[24px] flex items-center justify-center mx-auto mb-6">
+                                    <span className="material-symbols-outlined text-primary text-4xl">lock</span>
                                 </div>
-                            </form>
-                        </section>
+                                <h3 className="text-white font-black uppercase text-xs tracking-widest mb-2">Limite de Lojas Atingido</h3>
+                                <p className="text-text-secondary text-sm max-w-[280px] mx-auto leading-relaxed">
+                                    Você já completou seu limite de <strong>{maxShops} {maxShops === 1 ? 'loja' : 'lojas'}</strong>.
+                                    Contrate um plano maior para gerir mais barbearias.
+                                </p>
+                            </div>
+                        )}
 
                         {/* Lista de Barbearias */}
                         <section className="space-y-4">
