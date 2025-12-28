@@ -288,23 +288,27 @@ const BookingFlow: React.FC = () => {
             </div>
 
             <div className="flex overflow-x-auto no-scrollbar gap-4 pb-8 -mx-4 px-4">
-              {monthDays.map(date => {
-                const isPast = date < today;
-                const isToday = date.toDateString() === today.toDateString();
-                const disabled = isPast && !isToday;
-                const selected = selectedFullDate?.toDateString() === date.toDateString();
+              {monthDays
+                .filter(date => {
+                  const isToday = date.toDateString() === today.toDateString();
+                  return date >= today || isToday;
+                })
+                .map(date => {
+                  const isToday = date.toDateString() === today.toDateString();
+                  const selected = selectedFullDate?.toDateString() === date.toDateString();
 
-                return (
-                  <div
-                    key={date.toISOString()}
-                    onClick={() => !disabled && setSelectedFullDate(date)}
-                    className={`flex flex-col items-center justify-center min-w-[75px] h-[95px] rounded-[24px] cursor-pointer transition-all ${selected ? 'bg-primary shadow-2xl shadow-primary/40 scale-110' : disabled ? 'bg-surface-dark/40 opacity-10 cursor-not-allowed' : 'bg-surface-dark border border-white/5 hover:border-white/20'}`}
-                  >
-                    <span className={`text-[10px] font-black uppercase mb-1 ${selected ? 'text-white/80' : 'text-text-secondary'}`}>{date.toLocaleString('pt-BR', { weekday: 'short' }).replace('.', '')}</span>
-                    <span className={`text-2xl font-black ${selected ? 'text-white' : 'text-white/90'}`}>{date.getDate()}</span>
-                  </div>
-                );
-              })}
+                  return (
+                    <div
+                      key={date.toISOString()}
+                      onClick={() => setSelectedFullDate(date)}
+                      className={`flex flex-col items-center justify-center min-w-[75px] h-[95px] rounded-[24px] cursor-pointer transition-all ${selected ? 'bg-primary shadow-2xl shadow-primary/40 scale-110' : 'bg-surface-dark border border-white/5 hover:border-white/20'}`}
+                    >
+                      <span className={`text-[10px] font-black uppercase mb-1 ${selected ? 'text-white/80' : 'text-text-secondary'}`}>{date.toLocaleString('pt-BR', { weekday: 'short' }).replace('.', '')}</span>
+                      <span className={`text-2xl font-black ${selected ? 'text-white' : 'text-white/90'}`}>{date.getDate()}</span>
+                      {isToday && !selected && <span className="text-[8px] font-black text-primary uppercase mt-1">Hoje</span>}
+                    </div>
+                  );
+                })}
             </div>
 
             <h2 className="font-black text-sm uppercase tracking-widest text-text-secondary mb-5">Horários Disponíveis</h2>
