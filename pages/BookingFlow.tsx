@@ -17,13 +17,21 @@ const BookingFlow: React.FC = () => {
   const [selectedProf, setSelectedProf] = useState<Professional | 'qualquer' | null>(null);
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time for accurate date comparison
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedFullDate, setSelectedFullDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
 
   useEffect(() => {
     fetchShopDetails();
   }, [barbershopId]);
+
+  useEffect(() => {
+    if (selectedFullDate && barbershopId) {
+      fetchBookedTimes();
+    }
+  }, [selectedFullDate, barbershopId]);
 
   async function fetchShopDetails() {
     if (!barbershopId) return;
@@ -41,6 +49,24 @@ const BookingFlow: React.FC = () => {
       console.error('Error fetching shop:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchBookedTimes() {
+    if (!selectedFullDate || !barbershopId) return;
+    try {
+      const dateStr = selectedFullDate.toLocaleDateString('pt-BR');
+      const { data, error } = await supabase
+        .from('user_appointments')
+        .select('time')
+        .eq('barbershop_id', barbershopId)
+        .eq('date', dateStr)
+        .eq('status', 'confirmed');
+
+      if (error) throw error;
+      setBookedTimes(data.map((b: any) => b.time));
+    } catch (error) {
+      console.error('Error fetching booked times:', error);
     }
   }
 
@@ -64,12 +90,35 @@ const BookingFlow: React.FC = () => {
   };
 
   const handleBack = () => {
-    if (step > 1) setStep(step - 1);
+    if (step === 3) {
+      setStep(2);
+      setSelectedFullDate(null);
+      setSelectedTime(null);
+      setBookedTimes([]);
+    } else if (step === 2) setStep(1);
     else navigate(-1);
   };
 
   const handleConfirm = async () => {
     if (!selectedService || !selectedProf || !selectedFullDate || !selectedTime || !barbershopId) return;
+
+    // Check if time is still available (concurrency protection)
+    const dateStr = selectedFullDate.toLocaleDateString('pt-BR');
+    const { data: existing } = await supabase
+      .from('user_appointments')
+      .select('id')
+      .eq('barbershop_id', barbershopId)
+      .eq('date', dateStr)
+      .eq('time', selectedTime)
+      .eq('status', 'confirmed')
+      .single();
+
+    if (existing) {
+      alert('Este horário acabou de ser agendado por outra pessoa. Por favor, escolha outro horário.');
+      fetchBookedTimes();
+      setSelectedTime(null);
+      return;
+    }
 
     try {
       setBookingLoading(true);
@@ -87,7 +136,7 @@ const BookingFlow: React.FC = () => {
           barbershop_name: shop.name,
           service_name: selectedService.name,
           professional_name: selectedProf === 'qualquer' ? 'Próximo Livre' : (selectedProf as Professional).name,
-          date: selectedFullDate.toLocaleDateString('pt-BR'),
+          date: dateStr,
           time: selectedTime,
           status: 'confirmed'
         });
@@ -240,10 +289,17 @@ const BookingFlow: React.FC = () => {
 
             <div className="flex overflow-x-auto no-scrollbar gap-4 pb-8 -mx-4 px-4">
               {monthDays.map(date => {
-                const disabled = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const isPast = date < today;
+                const isToday = date.toDateString() === today.toDateString();
+                const disabled = isPast && !isToday;
                 const selected = selectedFullDate?.toDateString() === date.toDateString();
+
                 return (
-                  <div key={date.toISOString()} onClick={() => !disabled && setSelectedFullDate(date)} className={`flex flex-col items-center justify-center min-w-[75px] h-[95px] rounded-[24px] cursor-pointer transition-all ${selected ? 'bg-primary shadow-2xl shadow-primary/40 scale-110' : disabled ? 'bg-surface-dark/40 opacity-20' : 'bg-surface-dark border border-white/5 hover:border-white/20'}`}>
+                  <div
+                    key={date.toISOString()}
+                    onClick={() => !disabled && setSelectedFullDate(date)}
+                    className={`flex flex-col items-center justify-center min-w-[75px] h-[95px] rounded-[24px] cursor-pointer transition-all ${selected ? 'bg-primary shadow-2xl shadow-primary/40 scale-110' : disabled ? 'bg-surface-dark/40 opacity-10 cursor-not-allowed' : 'bg-surface-dark border border-white/5 hover:border-white/20'}`}
+                  >
                     <span className={`text-[10px] font-black uppercase mb-1 ${selected ? 'text-white/80' : 'text-text-secondary'}`}>{date.toLocaleString('pt-BR', { weekday: 'short' }).replace('.', '')}</span>
                     <span className={`text-2xl font-black ${selected ? 'text-white' : 'text-white/90'}`}>{date.getDate()}</span>
                   </div>
@@ -253,9 +309,32 @@ const BookingFlow: React.FC = () => {
 
             <h2 className="font-black text-sm uppercase tracking-widest text-text-secondary mb-5">Horários Disponíveis</h2>
             <div className="grid grid-cols-3 gap-3 mb-10">
-              {times.map(t => (
-                <button key={t} onClick={() => setSelectedTime(t)} className={`py-4 rounded-2xl border-2 text-sm font-black transition-all ${selectedTime === t ? 'bg-primary border-primary shadow-xl shadow-primary/25 text-white' : 'bg-surface-dark border-transparent text-text-secondary hover:border-white/10'}`}>{t}</button>
-              ))}
+              {times.map(t => {
+                const isBooked = bookedTimes.includes(t);
+                // Also check if time has already passed today
+                let isPassedToday = false;
+                if (selectedFullDate?.toDateString() === today.toDateString()) {
+                  const [hour, minute] = t.split(':').map(Number);
+                  const now = new Date();
+                  if (hour < now.getHours() || (hour === now.getHours() && minute <= now.getMinutes())) {
+                    isPassedToday = true;
+                  }
+                }
+
+                const isDisabled = isBooked || isPassedToday;
+
+                return (
+                  <button
+                    key={t}
+                    disabled={isDisabled}
+                    onClick={() => setSelectedTime(t)}
+                    className={`py-4 rounded-2xl border-2 text-sm font-black transition-all relative overflow-hidden ${selectedTime === t ? 'bg-primary border-primary shadow-xl shadow-primary/25 text-white' : isDisabled ? 'bg-surface-dark border-transparent text-text-secondary/20 cursor-not-allowed opacity-50' : 'bg-surface-dark border-transparent text-text-secondary hover:border-white/10'}`}
+                  >
+                    {t}
+                    {isBooked && <div className="absolute inset-0 flex items-center justify-center bg-black/40"><span className="text-[10px] bg-red-500/80 text-white px-1.5 rounded-md transform -rotate-12">LOTADO</span></div>}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="bg-surface-dark/50 rounded-[28px] p-5 border border-white/5 mb-10">
