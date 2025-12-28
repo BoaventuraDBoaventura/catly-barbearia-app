@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAddressFromCoords } from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
 import { calculateDistance, formatDistance } from '../services/locationUtils';
+import { isShopOpen } from '../services/timeUtils';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -180,7 +181,8 @@ const Home: React.FC = () => {
 
       return {
         ...shop,
-        realDistance
+        realDistance,
+        is_open: isShopOpen(shop.opening_time || '08:00', shop.closing_time || '20:00', shop.opening_days)
       };
     }).filter(shop => {
       const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());

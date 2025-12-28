@@ -38,7 +38,9 @@ const Admin: React.FC = () => {
         neighborhood: '',
         image: '',
         description: '',
+        opening_time: '08:00',
         closing_time: '20:00',
+        opening_days: [1, 2, 3, 4, 5, 6], // Segunda a Sábado por padrão
         is_premium: false,
         distance: 1.0,
         latitude: null as number | null,
@@ -388,7 +390,9 @@ const Admin: React.FC = () => {
             neighborhood: shop.neighborhood,
             image: shop.image,
             description: shop.description || '',
+            opening_time: shop.opening_time || '08:00',
             closing_time: shop.closing_time,
+            opening_days: shop.opening_days || [1, 2, 3, 4, 5, 6],
             is_premium: shop.is_premium,
             distance: shop.distance,
             latitude: shop.latitude,
@@ -414,7 +418,9 @@ const Admin: React.FC = () => {
             neighborhood: '',
             image: '',
             description: '',
+            opening_time: '08:00',
             closing_time: '20:00',
+            opening_days: [1, 2, 3, 4, 5, 6],
             is_premium: false,
             distance: 1.0,
             latitude: null,
@@ -507,13 +513,59 @@ const Admin: React.FC = () => {
                                         onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
                                         required
                                     />
-                                    <input
-                                        type="text"
-                                        placeholder="Horário Fechamento"
-                                        className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
-                                        value={formData.closing_time}
-                                        onChange={e => setFormData({ ...formData, closing_time: e.target.value })}
-                                    />
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Abertura</span>
+                                        <input
+                                            type="time"
+                                            className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
+                                            value={formData.opening_time}
+                                            onChange={e => setFormData({ ...formData, opening_time: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Fechamento</span>
+                                        <input
+                                            type="time"
+                                            className="w-full bg-background-dark border border-white/5 rounded-2xl p-4 text-white"
+                                            value={formData.closing_time}
+                                            onChange={e => setFormData({ ...formData, closing_time: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Dias de Funcionamento */}
+                                <div className="space-y-3">
+                                    <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest px-2">Dias de Funcionamento</span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {[
+                                            { id: 1, label: 'Seg' },
+                                            { id: 2, label: 'Ter' },
+                                            { id: 3, label: 'Qua' },
+                                            { id: 4, label: 'Qui' },
+                                            { id: 5, label: 'Sex' },
+                                            { id: 6, label: 'Sáb' },
+                                            { id: 0, label: 'Dom' }
+                                        ].map(day => (
+                                            <button
+                                                key={day.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    const days = formData.opening_days.includes(day.id)
+                                                        ? formData.opening_days.filter(d => d !== day.id)
+                                                        : [...formData.opening_days, day.id];
+                                                    setFormData({ ...formData, opening_days: days });
+                                                }}
+                                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border ${formData.opening_days.includes(day.id)
+                                                    ? 'bg-primary border-primary text-white shadow-lg'
+                                                    : 'bg-background-dark border-white/5 text-text-secondary'
+                                                    }`}
+                                            >
+                                                {day.label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* Localização GPS */}

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getStyleAdvice } from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
+import { isShopOpen } from '../services/timeUtils';
 
 const BarbershopDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +31,11 @@ const BarbershopDetail: React.FC = () => {
         .single();
 
       if (error) throw error;
-      setShop(data);
+      const enrichedShop = {
+        ...data,
+        is_open: isShopOpen(data.opening_time || '08:00', data.closing_time || '20:00', data.opening_days)
+      };
+      setShop(enrichedShop);
     } catch (error) {
       console.error('Error fetching shop:', error);
     } finally {
