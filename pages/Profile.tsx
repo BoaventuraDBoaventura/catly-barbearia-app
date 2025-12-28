@@ -253,12 +253,7 @@ const Profile: React.FC = () => {
                 alt={userName}
               />
             )}
-            <button
-              onClick={() => console.log('Alterar foto')}
-              className="absolute -bottom-2 -right-2 size-11 bg-primary text-white rounded-2xl border-4 border-background-dark flex items-center justify-center shadow-2xl active:scale-90 transition-all"
-            >
-              <span className="material-symbols-outlined text-[20px]">photo_camera</span>
-            </button>
+            {/* Removed photo camera icon button */}
           </div>
 
           {isEditingName ? (
@@ -290,7 +285,7 @@ const Profile: React.FC = () => {
             <div className="flex items-center gap-2 mb-2 overflow-hidden">
               <h1 className="text-2xl font-black whitespace-nowrap truncate">{userName}</h1>
               <button
-                onClick={() => setIsEditingName(true)}
+                onClick={() => navigate('/personal-data')}
                 className="size-8 bg-surface-highlight rounded-lg flex items-center justify-center active:scale-95 transition-all"
               >
                 <span className="material-symbols-outlined text-[16px]">edit</span>
