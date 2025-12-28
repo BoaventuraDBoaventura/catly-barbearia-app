@@ -1,0 +1,8 @@
+
+{
+  "name": "Catly - Barbearia App",
+  "description": "Uma plataforma moderna para agendamento de serviços em barbearias, com busca por localização, gestão de serviços e histórico de agendamentos.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
