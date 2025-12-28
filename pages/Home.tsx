@@ -256,9 +256,13 @@ const Home: React.FC = () => {
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1">
                   <h1 className="text-lg font-extrabold truncate text-white">{locationName}</h1>
-                  <span className={`material-symbols-outlined text-primary text-[16px] transition-all opacity-0 group-hover:opacity-100 ${loadingLocation ? 'animate-spin' : ''}`}>refresh</span>
+                  <span className={`material-symbols-outlined text-primary text-[16px] transition-all ${loadingLocation ? 'animate-spin opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                    {loadingLocation ? 'sync' : 'refresh'}
+                  </span>
                 </div>
-                {!loadingLocation && <span className="text-[9px] font-bold text-primary/60 uppercase tracking-tighter -mt-1 opacity-0 group-hover:opacity-100 transition-all">Clique para atualizar</span>}
+                <span className={`text-[9px] font-bold uppercase tracking-tighter -mt-0.5 transition-all ${loadingLocation ? 'text-primary animate-pulse opacity-100' : 'text-primary/60 opacity-0 group-hover:opacity-100'}`}>
+                  {loadingLocation ? 'Buscando localização...' : 'Clique para atualizar'}
+                </span>
               </div>
             </div>
           </div>
