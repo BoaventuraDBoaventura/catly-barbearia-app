@@ -23,6 +23,7 @@ const Admin: React.FC = () => {
     const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
     const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
     const [locationLoading, setLocationLoading] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
 
     // Services helper state
     const [newService, setNewService] = useState({
@@ -407,6 +408,7 @@ const Admin: React.FC = () => {
 
     function resetForm() {
         setIsEditing(false);
+        setIsCreating(false);
         setCurrentId(null);
         setImageFile(null);
         setImagePreview(null);
@@ -477,10 +479,32 @@ const Admin: React.FC = () => {
                 )}
                 {activeTab === 'shops' ? (
                     <>
-                        {/* Formulario de Cadastro - Só aparece se não exceder o limite ou estiver editando */}
-                        {(userRole === 'super_admin' || userRole === 'admin' || shops.length < maxShops || isEditing) ? (
-                            <section className="bg-surface-dark p-6 rounded-[32px] border border-white/5 shadow-2xl animate-slideUp">
-                                <h3 className="text-xl font-black mb-6 text-white">{isEditing ? 'Editar Barbearia' : 'Cadastrar Barbearia'}</h3>
+                        {/* Botão de Criar - Só aparece se não estiver editando/criando e tiver limite */}
+                        {!isEditing && !isCreating && (userRole === 'super_admin' || userRole === 'admin' || shops.length < maxShops) && (
+                            <div className="mb-6 flex justify-end">
+                                <button
+                                    onClick={() => setIsCreating(true)}
+                                    className="h-12 px-6 bg-primary text-white font-black rounded-2xl shadow-lg shadow-primary/30 active:scale-95 transition-all text-xs uppercase tracking-widest flex items-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined">add</span>
+                                    Nova Barbearia
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Formulario de Cadastro - Só aparece se estiver criando ou editando */}
+                        {(isCreating || isEditing) && (
+                            <section className="bg-surface-dark p-6 rounded-[32px] border border-white/5 shadow-2xl animate-slideUp mb-8">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-black text-white">{isEditing ? 'Editar Barbearia' : 'Cadastrar Barbearia'}</h3>
+                                    <button
+                                        type="button"
+                                        onClick={resetForm}
+                                        className="size-8 rounded-full bg-white/5 flex items-center justify-center text-text-secondary hover:text-white transition-all"
+                                    >
+                                        <span className="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <input
                                         type="text"
@@ -761,7 +785,7 @@ const Admin: React.FC = () => {
                                         >
                                             {isEditing ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR AGORA'}
                                         </button>
-                                        {isEditing && (
+                                        {(isEditing || isCreating) && (
                                             <button
                                                 type="button"
                                                 onClick={resetForm}
@@ -773,17 +797,6 @@ const Admin: React.FC = () => {
                                     </div>
                                 </form>
                             </section>
-                        ) : (
-                            <div className="bg-primary/5 border border-primary/10 p-10 rounded-[40px] text-center mb-10 animate-fadeIn border-dashed">
-                                <div className="size-16 bg-primary/10 rounded-[24px] flex items-center justify-center mx-auto mb-6">
-                                    <span className="material-symbols-outlined text-primary text-4xl">lock</span>
-                                </div>
-                                <h3 className="text-white font-black uppercase text-xs tracking-widest mb-2">Limite de Lojas Atingido</h3>
-                                <p className="text-text-secondary text-sm max-w-[280px] mx-auto leading-relaxed">
-                                    Você já completou seu limite de <strong>{maxShops} {maxShops === 1 ? 'loja' : 'lojas'}</strong>.
-                                    Contrate um plano maior para gerir mais barbearias.
-                                </p>
-                            </div>
                         )}
 
                         {/* Lista de Barbearias */}
