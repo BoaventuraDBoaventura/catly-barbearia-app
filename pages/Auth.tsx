@@ -44,6 +44,22 @@ const Auth: React.FC = () => {
         }
     };
 
+    const handleGoogleLogin = async () => {
+        try {
+            setLoading(true);
+            const { error: googleError } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/`
+                }
+            });
+            if (googleError) throw googleError;
+        } catch (err: any) {
+            setError(err.message || 'Erro ao entrar com Google');
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen flex flex-col bg-background-dark text-white p-6 animate-fadeIn">
             <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
@@ -52,7 +68,7 @@ const Auth: React.FC = () => {
                     <div className="size-20 bg-primary/20 rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-primary/30 shadow-2xl shadow-primary/20">
                         <span className="material-symbols-outlined text-primary text-[40px] filled">content_cut</span>
                     </div>
-                    <h1 className="text-4xl font-black tracking-tight mb-2">Catly</h1>
+                    <h1 className="text-4xl font-black tracking-tight mb-2">Barberias</h1>
                     <p className="text-text-secondary font-medium">Estilo impecável a um toque de distância.</p>
                 </div>
 
@@ -125,6 +141,22 @@ const Auth: React.FC = () => {
                         </button>
                     </form>
 
+                    <div className="my-6 flex items-center gap-4">
+                        <div className="h-px bg-white/10 flex-1"></div>
+                        <span className="text-xs font-bold text-text-secondary uppercase">ou</span>
+                        <div className="h-px bg-white/10 flex-1"></div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleGoogleLogin}
+                        disabled={loading}
+                        className="w-full h-14 bg-surface-highlight border border-white/5 rounded-2xl flex items-center justify-center gap-3 font-bold text-sm text-white hover:bg-white/5 active:scale-[0.98] transition-all"
+                    >
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="size-5" alt="Google" />
+                        Continuar com Google
+                    </button>
+
                     <div className="mt-8 text-center">
                         <button
                             onClick={() => setIsSignUp(!isSignUp)}
@@ -138,7 +170,7 @@ const Auth: React.FC = () => {
 
             <div className="py-8 text-center">
                 <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest">
-                    Catly App • Moçambique 2025
+                    Barberias App • Moçambique 2025
                 </p>
             </div>
         </div>

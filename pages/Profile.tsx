@@ -344,7 +344,7 @@ const Profile: React.FC = () => {
         </div>
 
         <div className="mt-12 text-center">
-          <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest">Catly App • Versão 2.4.0</p>
+          <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest">Barberias App • Versão 2.4.0</p>
           <p className="text-[9px] text-text-secondary/50 mt-1">Desenvolvido com ❤️ em Moçambique</p>
         </div>
       </div>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { calculateDistance, formatDistance } from '../services/locationUtils';
+import { calculateDistance, formatDistance, openDirections } from '../services/locationUtils';
 
 const MapExplore: React.FC = () => {
   const navigate = useNavigate();
@@ -85,26 +85,11 @@ const MapExplore: React.FC = () => {
 
   const handleDirections = (shop: any) => {
     if (!shop) return;
-
-    console.log('Traçando rota para:', shop.name);
-
-    // Simplificando a lógica de destino
-    let destString = '';
-    if (shop.latitude && shop.longitude) {
-      destString = `${shop.latitude},${shop.longitude}`;
-    } else {
-      destString = encodeURIComponent(`${shop.name}, ${shop.neighborhood || ''}, Maputo`);
-    }
-
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${destString}&travelmode=driving`;
-
-    // Tentar abrir em nova aba
-    const newWindow = window.open(url, '_blank');
-
-    // Fallback caso o popup blocker bloqueie
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      window.location.href = url;
-    }
+    openDirections(
+      shop.latitude,
+      shop.longitude,
+      `${shop.name}, ${shop.neighborhood || ''}, Maputo`
+    );
   };
 
   return (
@@ -178,7 +163,7 @@ const MapExplore: React.FC = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/barbershop/${shop.id}`);
+                  navigate(`/barbershop/${shop.slug || shop.id}`);
                 }}
                 className="h-12 rounded-xl bg-surface-highlight border border-white/10 font-bold text-xs uppercase tracking-widest text-white active:scale-95 transition-all"
               >

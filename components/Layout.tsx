@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navItems = [
     { label: 'Início', icon: 'home', path: '/' },
-    { label: 'Mapa', icon: 'map', path: '/map' },
+    { label: 'Favoritos', icon: 'favorite', path: '/favorites' },
     { label: 'Agenda', icon: 'calendar_month', path: '/appointments' },
     { label: 'Perfil', icon: 'person', path: '/profile' },
   ];

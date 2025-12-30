@@ -4,10 +4,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getStyleAdvice } from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
 import { isShopOpen } from '../services/timeUtils';
-import { calculateDistance, formatDistance } from '../services/locationUtils';
+import { calculateDistance, formatDistance, openDirections } from '../services/locationUtils';
+import StarRating from '../components/StarRating';
 
 const BarbershopDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [shop, setShop] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -16,6 +17,8 @@ const BarbershopDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState('servicos');
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [userRating, setUserRating] = useState(0);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(() => {
     const saved = localStorage.getItem('catly_user_coords');
     return saved ? JSON.parse(saved) : null;
@@ -23,11 +26,16 @@ const BarbershopDetail: React.FC = () => {
 
   useEffect(() => {
     fetchShopDetails();
-    checkFavoriteStatus();
     if (!userCoords) {
       getUserLocation();
     }
-  }, [id]);
+  }, [slug]);
+
+  useEffect(() => {
+    if (shop?.id) {
+      checkFavoriteStatus();
+    }
+  }, [shop]);
 
   const getUserLocation = () => {
     if (navigator.geolocation) {
@@ -49,7 +57,7 @@ const BarbershopDetail: React.FC = () => {
       const { data, error } = await supabase
         .from('barbershops')
         .select('*')
-        .eq('id', id)
+        .eq('slug', slug)
         .single();
 
       if (error) throw error;
@@ -66,7 +74,7 @@ const BarbershopDetail: React.FC = () => {
   }
 
   async function checkFavoriteStatus() {
-    if (!id) return;
+    if (!shop?.id) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
@@ -74,14 +82,14 @@ const BarbershopDetail: React.FC = () => {
       .from('user_favorites')
       .select('*')
       .eq('user_id', session.user.id)
-      .eq('barbershop_id', id)
+      .eq('barbershop_id', shop.id)
       .single();
 
     setIsFavorite(!!data);
   }
 
   const toggleFavorite = async () => {
-    if (!id) return;
+    if (!shop?.id) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate('/auth');
@@ -94,14 +102,14 @@ const BarbershopDetail: React.FC = () => {
         .from('user_favorites')
         .delete()
         .eq('user_id', session.user.id)
-        .eq('barbershop_id', id);
+        .eq('barbershop_id', shop.id);
     } else {
       setIsFavorite(true);
       await supabase
         .from('user_favorites')
         .insert({
           user_id: session.user.id,
-          barbershop_id: id
+          barbershop_id: shop.id
         });
     }
   };
@@ -112,6 +120,91 @@ const BarbershopDetail: React.FC = () => {
     const res = await getStyleAdvice(serviceName);
     setAdvice(res || null);
     setLoadingAdvice(false);
+  };
+
+  const handleDirections = () => {
+    if (!shop) return;
+    openDirections(
+      shop.latitude,
+      shop.longitude,
+      `${shop.name}, ${shop.neighborhood || ''}, Maputo`
+    );
+  };
+
+  const submitRating = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+
+      if (!shop?.id) return;
+
+      const { error } = await supabase
+        .from('reviews')
+        .insert({
+          user_id: session.user.id,
+          barbershop_id: shop.id,
+          rating: userRating
+        });
+
+      if (error) {
+        if (error.code === '23505') { // Unique violation
+          alert('Você já avaliou esta barbearia!');
+        } else {
+          throw error;
+        }
+      } else {
+        alert(`Obrigado! Sua avaliação de ${userRating} estrelas foi registrada.`);
+        fetchShopDetails(); // Refresh to update rating count
+      }
+    } catch (err) {
+      console.error('Error submitting rating:', err);
+      alert('Erro ao enviar avaliação. Tente novamente.');
+    } finally {
+      setShowRatingModal(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!shop) return;
+    const shareData = {
+      title: `Barbearia ${shop.name}`,
+      text: `Confira a barbearia ${shop.name} no Barberias!`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copiado para a área de transferência!');
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
+
+  const handleNavigateImage = (direction: 'next' | 'prev', e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!shop?.gallery || !selectedImage) return;
+
+    const gallery = Array.isArray(shop.gallery) ? shop.gallery : [];
+    if (gallery.length <= 1) return;
+
+    const currentIndex = gallery.indexOf(selectedImage);
+    if (currentIndex === -1) return;
+
+    let newIndex;
+    if (direction === 'next') {
+      newIndex = (currentIndex + 1) % gallery.length;
+    } else {
+      newIndex = (currentIndex - 1 + gallery.length) % gallery.length;
+    }
+
+    setSelectedImage(gallery[newIndex]);
   };
 
   if (loading) {
@@ -146,7 +239,17 @@ const BarbershopDetail: React.FC = () => {
             >
               <span className={`material-symbols-outlined ${isFavorite ? 'filled' : ''}`}>favorite</span>
             </button>
-            <button className="size-11 rounded-2xl bg-black/40 backdrop-blur-xl flex items-center justify-center border border-white/10 text-white shadow-2xl">
+            <button
+              onClick={handleDirections}
+              className="size-11 rounded-2xl bg-black/40 backdrop-blur-xl flex items-center justify-center border border-white/10 text-white shadow-2xl active:scale-95 transition-all"
+              title="Obter Rota"
+            >
+              <span className="material-symbols-outlined">directions</span>
+            </button>
+            <button
+              onClick={handleShare}
+              className="size-11 rounded-2xl bg-black/40 backdrop-blur-xl flex items-center justify-center border border-white/10 text-white shadow-2xl active:scale-95 transition-all"
+            >
               <span className="material-symbols-outlined">share</span>
             </button>
           </div>
@@ -171,13 +274,30 @@ const BarbershopDetail: React.FC = () => {
                 <span className="text-xs font-bold uppercase tracking-widest">{shop.neighborhood}</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20">
-              <span className="material-symbols-outlined text-yellow-500 text-[18px] filled">star</span>
-              <span className="text-white text-base font-black">{shop.rating}</span>
+            <div className="flex flex-col items-end">
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer active:scale-95 transition-all ${(shop.ratings_count || 0) >= 3
+                  ? 'bg-primary/10 border-primary/20'
+                  : 'bg-primary border-primary text-white'
+                  }`}
+                onClick={() => setShowRatingModal(true)}
+              >
+                {(shop.ratings_count || 0) >= 3 ? (
+                  <>
+                    <StarRating rating={shop.rating} size={14} />
+                    <span className="text-white text-sm font-black ml-1">{shop.rating?.toFixed(1)}</span>
+                  </>
+                ) : (
+                  <span className="text-xs font-black uppercase tracking-widest">Novo</span>
+                )}
+              </div>
+              <span className="text-[9px] text-text-secondary font-bold mt-1 cursor-pointer hover:text-white" onClick={() => setShowRatingModal(true)}>
+                {(shop.ratings_count || 0) > 0 ? `${shop.ratings_count} avaliações` : 'Seja o primeiro a avaliar'}
+              </span>
             </div>
           </div>
 
-          <div className="flex gap-6 py-4 border-t border-white/5">
+          <div className="flex gap-6 py-4 border-t border-white/5 items-center">
             <div className="flex flex-col">
               <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest">Distância</span>
               <span className="text-white font-bold">
@@ -191,6 +311,14 @@ const BarbershopDetail: React.FC = () => {
               <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest">Status</span>
               <span className={`font-bold ${shop.is_open ? 'text-success' : 'text-red-500'}`}>{shop.is_open ? 'Aberto' : 'Fechado'}</span>
             </div>
+            <div className="w-px h-8 bg-white/5 ml-auto"></div>
+            <button
+              onClick={handleDirections}
+              className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 px-4 py-2 rounded-xl border border-primary/20 transition-all active:scale-95 group"
+            >
+              <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">directions</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white">Rota</span>
+            </button>
           </div>
         </div>
 
@@ -256,13 +384,21 @@ const BarbershopDetail: React.FC = () => {
               {shop.description || 'Uma barbearia premium focada em estilo e bem-estar, proporcionando a melhor experiência de cuidado masculino.'}
             </p>
             <h4 className="text-xs font-black uppercase tracking-widest text-text-secondary mb-4">Localização</h4>
-            <div className="bg-surface-dark rounded-2xl p-4 border border-white/5 flex items-center gap-4">
-              <div className="size-12 rounded-xl bg-surface-highlight flex items-center justify-center text-primary">
-                <span className="material-symbols-outlined">map</span>
+            <div
+              onClick={handleDirections}
+              className="bg-surface-dark rounded-2xl p-4 border border-white/5 flex items-center justify-between group active:scale-[0.98] transition-all cursor-pointer hover:border-primary/30"
+            >
+              <div className="flex items-center gap-4">
+                <div className="size-12 rounded-xl bg-surface-highlight flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined">map</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white mb-0.5">{shop.address}</p>
+                  <p className="text-[10px] text-text-secondary uppercase font-bold">{shop.neighborhood}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-bold text-white mb-0.5">{shop.address}</p>
-                <p className="text-[10px] text-text-secondary uppercase font-bold">{shop.neighborhood}</p>
+              <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined">directions</span>
               </div>
             </div>
           </div>
@@ -309,18 +445,75 @@ const BarbershopDetail: React.FC = () => {
           onClick={() => setSelectedImage(null)}
         >
           <button
-            className="absolute top-12 right-6 size-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 text-white z-[210] active:scale-90 transition-all"
+            className="absolute top-12 right-6 size-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 text-white z-[210] active:scale-90 transition-all hover:bg-white/20"
             onClick={() => setSelectedImage(null)}
           >
             <span className="material-symbols-outlined">close</span>
           </button>
-          <div className="relative w-full max-w-4xl animate-scaleIn">
+
+          {/* Navigation Buttons */}
+          {shop.gallery && shop.gallery.length > 1 && (
+            <>
+              <button
+                className="absolute left-4 top-1/2 -translate-y-1/2 size-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 text-white z-[210] active:scale-90 transition-all hover:bg-white/20"
+                onClick={(e) => handleNavigateImage('prev', e)}
+              >
+                <span className="material-symbols-outlined text-[32px]">chevron_left</span>
+              </button>
+              <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 size-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 text-white z-[210] active:scale-90 transition-all hover:bg-white/20"
+                onClick={(e) => handleNavigateImage('next', e)}
+              >
+                <span className="material-symbols-outlined text-[32px]">chevron_right</span>
+              </button>
+            </>
+          )}
+
+          <div className="relative w-full max-w-4xl animate-scaleIn flex justify-center items-center h-full pointer-events-none">
             <img
               src={selectedImage}
-              className="w-full h-auto max-h-[85vh] object-contain rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.8)]"
+              className="max-w-full max-h-[85vh] object-contain rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.8)] pointer-events-auto"
               alt="Visualização"
               onClick={(e) => e.stopPropagation()}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Rating Modal */}
+      {showRatingModal && (
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-surface-dark rounded-[32px] p-6 w-full max-w-sm border border-white/10 shadow-2xl animate-slideUp">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-black text-white mb-2">Avaliar Experiência</h3>
+              <p className="text-text-secondary text-sm">Como foi seu atendimento na {shop.name}?</p>
+            </div>
+
+            <div className="flex justify-center mb-8">
+              <StarRating
+                rating={userRating}
+                interactive={true}
+                size={40}
+                onRatingChange={setUserRating}
+                className="gap-2"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowRatingModal(false)}
+                className="flex-1 h-12 rounded-xl bg-surface-highlight border border-white/10 font-bold text-sm text-text-secondary active:scale-95 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={submitRating}
+                disabled={userRating === 0}
+                className="flex-1 h-12 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Enviar Avaliação
+              </button>
+            </div>
           </div>
         </div>
       )}

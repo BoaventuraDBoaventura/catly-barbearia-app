@@ -14,6 +14,7 @@ import Auth from './pages/Auth';
 import PersonalData from './pages/PersonalData';
 import GlobalStats from './pages/GlobalStats';
 import Notifications from './pages/Notifications';
+import Favorites from './pages/Favorites';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<any>(null);
@@ -95,10 +96,11 @@ const App: React.FC = () => {
             <Layout>
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/barbershop/:id" element={<BarbershopDetail />} />
+                <Route path="/barbershop/:slug" element={<BarbershopDetail />} />
                 <Route path="/booking/:barbershopId" element={<BookingFlow />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/map" element={<MapExplore />} />
+                <Route path="/favorites" element={<Favorites />} />
                 <Route path="/appointments" element={<Appointments />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/personal-data" element={<PersonalData />} />

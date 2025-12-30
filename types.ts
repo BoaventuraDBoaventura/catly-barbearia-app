@@ -17,6 +17,7 @@ export interface Professional {
 
 export interface Barbershop {
   id: string;
+  slug?: string;
   name: string;
   address: string;
   neighborhood: string;
@@ -24,6 +25,7 @@ export interface Barbershop {
   latitude?: number;
   longitude?: number;
   rating: number;
+  ratings_count?: number;
   isOpen: boolean;
   closingTime?: string;
   image: string;

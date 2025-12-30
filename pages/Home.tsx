@@ -299,22 +299,6 @@ const Home: React.FC = () => {
           />
         </div>
 
-        {/* Categorias com Scroll Suave */}
-        <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.label)}
-              className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-xl px-4 transition-all ${activeCategory === cat.label
-                ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-105'
-                : 'bg-surface-highlight text-text-secondary border border-white/5'
-                }`}
-            >
-              <span className="material-symbols-outlined text-[18px]">{cat.icon}</span>
-              <p className="text-xs font-bold uppercase tracking-wider">{cat.label}</p>
-            </button>
-          ))}
-        </div>
       </header>
 
       {/* Main Content */}
@@ -324,7 +308,7 @@ const Home: React.FC = () => {
             <h2 className="text-xl font-black tracking-tight text-white">Perto de você</h2>
             <p className="text-xs text-text-secondary font-medium">Encontramos {filteredShops.length} lugares incríveis</p>
           </div>
-          <button onClick={() => navigate('/map')} className="text-primary text-xs font-bold uppercase tracking-widest px-3 py-1.5 bg-primary/10 rounded-lg">Ver Mapa</button>
+
         </div>
 
         <div className="grid gap-6">
@@ -337,7 +321,7 @@ const Home: React.FC = () => {
           ) : filteredShops.map((shop) => (
             <div
               key={shop.id}
-              onClick={() => navigate(`/barbershop/${shop.id}`)}
+              onClick={() => navigate(`/barbershop/${shop.slug || shop.id}`)}
               className="group flex flex-col bg-surface-dark rounded-[24px] overflow-hidden shadow-2xl transition-all border border-white/5 active:scale-[0.98] cursor-pointer relative"
             >
               <div className="relative aspect-[16/10] overflow-hidden">
@@ -371,9 +355,18 @@ const Home: React.FC = () => {
                       <span className="text-xs font-medium">{shop.neighborhood}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20">
-                    <span className="material-symbols-outlined text-yellow-400 text-[16px] filled">star</span>
-                    <span className="text-white text-sm font-black">{shop.rating}</span>
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border backdrop-blur-md ${(shop.ratings_count || 0) >= 3
+                      ? 'bg-white/10 border-white/20'
+                      : 'bg-primary/90 border-primary/20'
+                    }`}>
+                    {(shop.ratings_count || 0) >= 3 ? (
+                      <>
+                        <span className="material-symbols-outlined text-yellow-400 text-[16px] filled">star</span>
+                        <span className="text-white text-sm font-black">{shop.rating?.toFixed(1)}</span>
+                      </>
+                    ) : (
+                      <span className="text-white text-[10px] font-black uppercase tracking-widest">Novo</span>
+                    )}
                   </div>
                 </div>
               </div>

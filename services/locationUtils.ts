@@ -34,3 +34,33 @@ export function formatDistance(km: number): string {
     }
     return `${km.toFixed(1)} km`;
 }
+
+/**
+ * Opens the native maps app (Apple Maps on iOS, Google Maps elsewhere) with directions to the destination.
+ * @param latitude Destination latitude
+ * @param longitude Destination longitude
+ * @param addressQuery Fallback address query if coords missing
+ */
+export function openDirections(latitude?: number, longitude?: number, addressQuery?: string) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+
+    let url = '';
+
+    if (isIOS) {
+        // Apple Maps
+        if (latitude && longitude) {
+            url = `http://maps.apple.com/?daddr=${latitude},${longitude}&dirflg=d`;
+        } else {
+            url = `http://maps.apple.com/?daddr=${encodeURIComponent(addressQuery || '')}&dirflg=d`;
+        }
+    } else {
+        // Google Maps
+        if (latitude && longitude) {
+            url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
+        } else {
+            url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressQuery || '')}&travelmode=driving`;
+        }
+    }
+
+    window.open(url, '_blank');
+}
